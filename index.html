@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f8f8fb">
+<meta name="description" content="シンプルで使いやすい個人メモ帳">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="マイノート">
+<title>マイノート</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f8f8fb;
+    --bg3: #f0f0f7;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #1a1a2e;
+    --text2: #5a5a7a;
+    --text3: #9090b0;
+    --accent: #7c6df0;
+    --accent2: #6455d8;
+    --accent-glow: rgba(124,109,240,0.12);
+    --tag-work-bg: rgba(99,153,34,0.12);
+    --tag-work: #8ec43a;
+    --tag-personal-bg: rgba(29,158,117,0.12);
+    --tag-personal: #2dcfa0;
+    --tag-idea-bg: rgba(186,117,23,0.12);
+    --tag-idea: #f0a830;
+    --tag-todo-bg: rgba(216,90,48,0.12);
+    --tag-todo: #f07050;
+    --danger: #f06060;
+    --success: #50c878;
+    --sidebar-w: 260px;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  #app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #sidebar-header {
+    padding: 20px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #app-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  #app-logo .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), #a98ef5);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  #app-logo .logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  #search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  #search-wrap svg {
+    position: absolute;
+    left: 10px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px;
+    stroke: var(--text3);
+    pointer-events: none;
+  }
+
+  #search-box {
+    width: 100%;
+    padding: 8px 10px 8px 32px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #search-box:focus { border-color: var(--accent); }
+  #search-box::placeholder { color: var(--text3); }
+
+  #new-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%;
+    padding: 9px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  #new-btn:hover { background: var(--accent2); }
+  #new-btn:active { transform: scale(0.98); }
+
+  #filter-tabs {
+    display: flex; gap: 5px;
+    padding: 10px 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .ftab {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .ftab:hover { border-color: var(--border2); color: var(--text); }
+  .ftab.active { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+
+  #note-count {
+    font-size: 11px;
+    color: var(--text3);
+    padding: 8px 16px 4px;
+  }
+
+  #note-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 10px 10px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  #note-list::-webkit-scrollbar { width: 4px; }
+  #note-list::-webkit-scrollbar-track { background: transparent; }
+  #note-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .note-item {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .note-item:hover { background: #ffffff; border-color: var(--border); }
+  .note-item.active {
+    background: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-glow);
+  }
+
+  .note-item-title {
+    font-size: 13px; font-weight: 500;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding-right: 18px;
+  }
+  .note-item-preview {
+    font-size: 11px; color: var(--text3);
+    margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .note-item-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 6px;
+  }
+  .note-date { font-size: 10px; color: var(--text3); }
+  .note-tag {
+    font-size: 10px; padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .tag-work { background: var(--tag-work-bg); color: var(--tag-work); }
+  .tag-personal { background: var(--tag-personal-bg); color: var(--tag-personal); }
+  .tag-idea { background: var(--tag-idea-bg); color: var(--tag-idea); }
+  .tag-todo { background: var(--tag-todo-bg); color: var(--tag-todo); }
+
+  .pin-icon {
+    position: absolute; right: 10px; top: 10px;
+    font-size: 12px; color: var(--accent);
+    opacity: 0.8;
+  }
+
+  /* ── MAIN ── */
+  #main {
+    flex: 1; display: flex; flex-direction: column; min-width: 0;
+    background: var(--bg);
+  }
+
+  #empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--text3);
+    gap: 14px;
+    user-select: none;
+  }
+  #empty-state svg { width: 48px; height: 48px; stroke: var(--text3); opacity: 0.4; }
+  #empty-state p { font-size: 14px; opacity: 0.6; }
+
+  #editor {
+    flex: 1; display: none; flex-direction: column; height: 100%;
+  }
+
+  #editor-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  #note-title-input {
+    flex: 1;
+    font-size: 16px; font-weight: 500;
+    font-family: 'Noto Serif JP', serif;
+    border: none; outline: none;
+    background: transparent;
+    color: var(--text);
+    min-width: 0;
+  }
+  #note-title-input::placeholder { color: var(--text3); font-family: 'Noto Sans JP', sans-serif; font-weight: 400; }
+
+  .tb-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+  #tag-select {
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    background: #ffffff;
+    color: var(--text2);
+    cursor: pointer;
+    outline: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: border-color 0.15s;
+  }
+  #tag-select:focus { border-color: var(--accent); }
+
+  .tb-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .tb-btn svg { width: 17px; height: 17px; stroke: currentColor; }
+  .tb-btn:hover { background: #ffffff; border-color: var(--border); color: var(--text); }
+  .tb-btn.pinned { color: var(--accent); }
+  .tb-btn.danger:hover { background: rgba(240,96,96,0.12); border-color: var(--danger); color: var(--danger); }
+
+  #editor-area {
+    flex: 1; padding: 24px 28px;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  #editor-area::-webkit-scrollbar { width: 5px; }
+  #editor-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  #note-body {
+    width: 100%; height: 100%;
+    border: none; outline: none; resize: none;
+    font-size: 14px; line-height: 1.9;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    background: transparent;
+    caret-color: var(--accent);
+  }
+  #note-body::placeholder { color: var(--text3); }
+
+  #editor-footer {
+    padding: 8px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; color: var(--text3);
+  }
+
+  .save-indicator {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text3);
+    transition: color 0.3s;
+  }
+  .save-indicator svg { width: 13px; height: 13px; stroke: currentColor; }
+  .save-indicator.saved { color: var(--success); }
+
+  /* install banner */
+  #install-banner {
+    display: none;
+    position: fixed; bottom: 20px; right: 20px;
+    background: #ffffff;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    max-width: 300px;
+    z-index: 100;
+  }
+  #install-banner p { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .install-btns { display: flex; gap: 8px; }
+  .install-btn {
+    flex: 1; padding: 8px; font-size: 12px; border-radius: var(--radius-sm);
+    cursor: pointer; border: 1px solid var(--border); font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+  }
+  .install-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .install-btn.primary:hover { background: var(--accent2); }
+  .install-btn.secondary { background: transparent; color: var(--text2); }
+  .install-btn.secondary:hover { background: #ffffff; color: var(--text); }
+
+  @media (max-width: 600px) {
+    #sidebar { width: 200px; min-width: 200px; }
+    #editor-toolbar { padding: 10px 14px; }
+    #editor-area { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div id="app-logo">
+        <div class="logo-icon">📝</div>
+        <div class="logo-text">マイノート</div>
+      </div>
+      <div id="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="search-box" type="text" placeholder="検索…" oninput="filterNotes()">
+      </div>
+      <button id="new-btn" onclick="newNote()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>
+        新しいメモ
+      </button>
+    </div>
+    <div id="filter-tabs">
+      <button class="ftab active" onclick="setFilter('all',this)">すべて</button>
+      <button class="ftab" onclick="setFilter('work',this)">仕事</button>
+      <button class="ftab" onclick="setFilter('personal',this)">個人</button>
+      <button class="ftab" onclick="setFilter('idea',this)">アイデア</button>
+      <button class="ftab" onclick="setFilter('todo',this)">TODO</button>
+    </div>
+    <div id="note-count">0件</div>
+    <div id="note-list"></div>
+  </div>
+
+  <div id="main">
+    <div id="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <p>メモを選ぶか「新しいメモ」を作成してください</p>
+    </div>
+
+    <div id="editor" style="display:none;flex-direction:column;height:100%">
+      <div id="editor-toolbar">
+        <input id="note-title-input" type="text" placeholder="タイトルを入力…" oninput="saveCurrentNote()">
+        <div class="tb-sep"></div>
+        <select id="tag-select" onchange="saveCurrentNote()">
+          <option value="">タグなし</option>
+          <option value="work">仕事</option>
+          <option value="personal">個人</option>
+          <option value="idea">アイデア</option>
+          <option value="todo">TODO</option>
+        </select>
+        <button class="tb-btn" id="pin-btn" title="ピン留め" onclick="togglePin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 9-2 2 4 4 2-2M13 3l2 2-7 7-2-2 7-7zM5 19l4-4"/></svg>
+        </button>
+        <button class="tb-btn" title="コピー" onclick="copyNote()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn danger" title="削除" onclick="deleteNote()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+      <div id="editor-area">
+        <textarea id="note-body" placeholder="メモを入力してください…" oninput="saveCurrentNote()"></textarea>
+      </div>
+      <div id="editor-footer">
+        <span id="char-count">0 文字</span>
+        <span class="save-indicator saved" id="save-indicator">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          保存済み
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="install-banner">
+  <p>📲 このアプリをデスクトップにインストールしますか？</p>
+  <div class="install-btns">
+    <button class="install-btn primary" onclick="installApp()">インストール</button>
+    <button class="install-btn secondary" onclick="dismissBanner()">後で</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'mynote_notes';
+let notes = [];
+let currentId = null;
+let filterTag = 'all';
+let saveTimer = null;
+let deferredPrompt = null;
+
+function loadNotes() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      notes = JSON.parse(saved);
+    } else {
+      const today = dateStr();
+      notes = [
+        { id: 1, title: 'ようこそ！', body: 'マイノートへようこそ！\n\nこのアプリでできること：\n・メモの作成・編集・削除\n・タグ分類（仕事／個人／アイデア／TODO）\n・検索機能\n・ピン留め（重要メモを上部固定）\n・データは自動保存されます ✨', tag: 'personal', date: today, pinned: true },
+        { id: 2, title: '買い物リスト', body: '□ 牛乳\n□ 卵\n□ パン\n□ コーヒー\n□ りんご', tag: 'todo', date: today, pinned: false },
+        { id: 3, title: 'アイデアメモ', body: 'やってみたいこと：\n・早起きの習慣をつける\n・週1冊本を読む\n・料理を覚える', tag: 'idea', date: today, pinned: false },
+      ];
+      saveNotes();
+    }
+  } catch(e) { notes = []; }
+}
+
+function saveNotes() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); } catch(e) {}
+}
+
+function dateStr() {
+  const d = new Date();
+  return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+}
+
+function getTagLabel(tag) {
+  return {work:'仕事', personal:'個人', idea:'アイデア', todo:'TODO'}[tag] || '';
+}
+
+function renderList() {
+  const q = document.getElementById('search-box').value.toLowerCase();
+  let filtered = notes.filter(n => {
+    if (filterTag !== 'all' && n.tag !== filterTag) return false;
+    if (q && !n.title.toLowerCase().includes(q) && !n.body.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  filtered = [...filtered.filter(n=>n.pinned), ...filtered.filter(n=>!n.pinned)];
+  document.getElementById('note-count').textContent = filtered.length + ' 件';
+  const list = document.getElementById('note-list');
+  list.innerHTML = '';
+  filtered.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'note-item' + (n.id === currentId ? ' active' : '');
+    el.onclick = () => openNote(n.id);
+    const tagHtml = n.tag ? `<span class="note-tag tag-${n.tag}">${getTagLabel(n.tag)}</span>` : '';
+    const pinHtml = n.pinned ? `<span class="pin-icon" aria-label="ピン留め">📌</span>` : '';
+    el.innerHTML = `
+      ${pinHtml}
+      <div class="note-item-title">${escHtml(n.title || '(タイトルなし)')}</div>
+      <div class="note-item-preview">${escHtml(n.body.replace(/\n/g,' ').slice(0,45))}</div>
+      <div class="note-item-meta"><span class="note-date">${n.date}</span>${tagHtml}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openNote(id) {
+  currentId = id;
+  const n = notes.find(x=>x.id===id);
+  if (!n) return;
+  document.getElementById('empty-state').style.display = 'none';
+  const ed = document.getElementById('editor');
+  ed.style.display = 'flex';
+  document.getElementById('note-title-input').value = n.title;
+  document.getElementById('note-body').value = n.body;
+  document.getElementById('tag-select').value = n.tag || '';
+  updateCharCount();
+  updatePinBtn();
+  renderList();
+}
+
+function newNote() {
+  const id = Date.now();
+  notes.unshift({ id, title: '', body: '', tag: '', date: dateStr(), pinned: false });
+  saveNotes();
+  openNote(id);
+  setTimeout(() => document.getElementById('note-title-input').focus(), 50);
+}
+
+function saveCurrentNote() {
+  if (!currentId) return;
+  const n = notes.find(x=>x.id===currentId);
+  if (!n) return;
+  n.title = document.getElementById('note-title-input').value;
+  n.body = document.getElementById('note-body').value;
+  n.tag = document.getElementById('tag-select').value;
+  updateCharCount();
+  const ind = document.getElementById('save-indicator');
+  ind.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;stroke:currentColor"><path d="M21 2H3v16l4-4h14z"/></svg> 保存中…`;
+  ind.className = 'save-indicator';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveNotes();
+    renderList();
+    ind.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;stroke:currentColor"><polyline points="20 6 9 17 4 12"/></svg> 保存済み`;
+    ind.className = 'save-indicator saved';
+  }, 700);
+}
+
+function deleteNote() {
+  if (!currentId) return;
+  if (!confirm('このメモを削除しますか？')) return;
+  notes = notes.filter(x=>x.id !== currentId);
+  saveNotes();
+  currentId = null;
+  document.getElementById('editor').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'flex';
+  renderList();
+}
+
+function togglePin() {
+  if (!currentId) return;
+  const n = notes.find(x=>x.id===currentId);
+  if (n) n.pinned = !n.pinned;
+  saveNotes();
+  updatePinBtn();
+  renderList();
+}
+
+function updatePinBtn() {
+  const n = notes.find(x=>x.id===currentId);
+  const btn = document.getElementById('pin-btn');
+  if (n && n.pinned) btn.classList.add('pinned');
+  else btn.classList.remove('pinned');
+  btn.title = (n && n.pinned) ? 'ピン解除' : 'ピン留め';
+}
+
+function copyNote() {
+  const title = document.getElementById('note-title-input').value;
+  const body = document.getElementById('note-body').value;
+  const text = (title ? title + '\n\n' : '') + body;
+  navigator.clipboard.writeText(text).then(() => {
+    const ind = document.getElementById('save-indicator');
+    const prev = ind.innerHTML;
+    const prevClass = ind.className;
+    ind.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;stroke:currentColor"><polyline points="20 6 9 17 4 12"/></svg> コピーしました`;
+    ind.className = 'save-indicator saved';
+    setTimeout(() => { ind.innerHTML = prev; ind.className = prevClass; }, 2000);
+  }).catch(() => {});
+}
+
+function setFilter(tag, btn) {
+  filterTag = tag;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function filterNotes() { renderList(); }
+
+function updateCharCount() {
+  const len = document.getElementById('note-body').value.length;
+  document.getElementById('char-count').textContent = len.toLocaleString() + ' 文字';
+}
+
+// PWA install
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'block';
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissBanner(); });
+}
+
+function dismissBanner() {
+  document.getElementById('install-banner').style.display = 'none';
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+loadNotes();
+renderList();
+</script>
+</body>
+</html>
